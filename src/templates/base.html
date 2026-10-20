@@ -1,0 +1,153 @@
+{% load i18n %}
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Django{% endblock title %}</title>
+  {% block css %}
+  <style>
+    /* Django brand palette */
+    :root {
+      --dj-dark: #092e20;
+      --dj-green: #0c4b33;
+      --dj-accent: #44b78b;
+      --dj-light: #c9f0dd;
+      --bg: #f8faf9;
+      --card: #ffffff;
+      --text: #1f2d27;
+      --muted: #5b6b64;
+      --border: #e1e8e4;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1f17;
+        --card: #10291f;
+        --text: #e6f2ec;
+        --muted: #9db5aa;
+        --border: #1d3d30;
+        --dj-green: #c9f0dd;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; margin: 0; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .page {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 6px solid var(--dj-accent);
+      border-radius: 10px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(9, 46, 32, 0.08);
+    }
+
+    .status-code {
+      margin: 0;
+      font-size: 96px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: var(--dj-accent);
+    }
+
+    .card h1 {
+      margin: 16px 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dj-green);
+    }
+
+    .card p {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 6px;
+      background: var(--dj-accent);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+
+    .btn:hover { background: #3a9c76; }
+
+    .messages { list-style: none; padding: 0; margin: 0 0 24px; text-align: left; }
+
+    .messages li {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      border-left: 4px solid var(--dj-accent);
+      background: var(--dj-light);
+      color: var(--dj-dark);
+    }
+
+    .messages li.error { border-color: #ba2121; background: #ffefef; color: #ba2121; }
+    .messages li.warning { border-color: #c4a000; background: #fff8d6; color: #6b5800; }
+
+    footer {
+      padding: 16px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    footer strong { color: var(--dj-accent); }
+
+    @media (max-width: 480px) {
+      .card { padding: 32px 20px; }
+      .status-code { font-size: 72px; }
+    }
+  </style>
+  {% endblock css %}
+  {% block javascript %}{% endblock javascript %}
+</head>
+
+<body>
+  <main class="page">
+    <div class="card">
+      {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% block content %}{% endblock content %}
+    </div>
+  </main>
+  <footer>Powered by <strong>Django</strong></footer>
+  {% block modal %}{% endblock modal %}
+  {% block inline_javascript %}{% endblock inline_javascript %}
+</body>
+
+</html>

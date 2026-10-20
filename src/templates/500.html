@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error (500){% endblock title %}
+{% block content %}
+  <p class="status-code">500</p>
+  <h1>Something went wrong</h1>
+  <p>
+    We track these errors automatically, but if the problem persists feel free to contact us.
+    In the meantime, try refreshing.
+  </p>
+  <a class="btn" href="/">Go to homepage</a>
+{% endblock content %}
