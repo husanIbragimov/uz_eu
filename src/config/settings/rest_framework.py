@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from .env import SECRET_KEY
+from .env import SECRET_KEY, env
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -59,4 +59,15 @@ SIMPLE_JWT = {
     # "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     # "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     # "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+}
+
+# Refresh token lives only in an HttpOnly cookie scoped to the auth endpoints; the body carries just `access`.
+REFRESH_TOKEN_COOKIE = {
+    "key": env.str("REFRESH_COOKIE_NAME", "refresh_token"),
+    "path": "/api/v1/auth/",
+    "domain": env.str("REFRESH_COOKIE_DOMAIN", None),
+    "secure": env.bool("REFRESH_COOKIE_SECURE", True),
+    "httponly": True,
+    "samesite": env.str("REFRESH_COOKIE_SAMESITE", "Lax"),
+    "max_age": int(SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()),
 }

@@ -12,7 +12,7 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localho
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['http://localhost:8000'])
 
 SECRET_KEY = env.str('SECRET_KEY', 'django-insecure')
-DEBUG = env.bool('DEBUG') == 'True'
+DEBUG = env.bool('DEBUG', False)
 
 KAFKA_SERVERS = env.str('KAFKA_SERVERS')
 
