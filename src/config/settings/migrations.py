@@ -5,8 +5,8 @@ from .env import BASE_DIR, PRODUCTION
 
 
 def create_migration_dirs(app):
-    app_path = os.path.join(BASE_DIR, app.replace('.', '/'))
-    migrations_dir = os.path.join(app_path, 'migrations')
+    app_path = os.path.join(BASE_DIR, app.replace(".", "/"))
+    migrations_dir = os.path.join(app_path, "migrations")
 
     if not os.path.exists(migrations_dir):
         return None
@@ -21,7 +21,8 @@ def create_migration_dirs(app):
 
 _MIGRATION_APPS: list = list(filter(None, (create_migration_dirs(app) for app in LOCAL_APPS)))
 
+# Django keys MIGRATION_MODULES by app label (the last dotted segment, e.g. "_auth"), not the module path.
 MIGRATION_MODULES = {
-    app: f"{app}.migrations.prod" if PRODUCTION else f"{app}.migrations.dev"
+    app.rsplit(".", 1)[-1]: f"{app}.migrations.prod" if PRODUCTION else f"{app}.migrations.dev"
     for app in _MIGRATION_APPS
 }

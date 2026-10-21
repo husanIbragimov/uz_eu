@@ -56,7 +56,7 @@ class BaseGenericAPI(_BaseAPI):
     _serializer = None
 
     def perform_check(self, request, *args, **kwargs):
-        self._serializer = self.serializer_class(data=request.data)
+        self._serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
 
         self._serializer.is_valid(raise_exception=True)
 
@@ -100,7 +100,9 @@ class BaseGenericUpdateAPI(BaseGenericAPI):
             return None
         instance = self.get_object()
         partial = request.method == "PATCH"
-        self._serializer = self.serializer_class(instance, data=request.data, partial=partial)
+        self._serializer = self.serializer_class(
+            instance, data=request.data, partial=partial, context=self.get_serializer_context()
+        )
         self._serializer.is_valid(raise_exception=True)
         self._validate_data = self._serializer.validated_data
         return self._validate_data

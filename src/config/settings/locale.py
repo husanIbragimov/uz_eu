@@ -1,9 +1,13 @@
-LANGUAGE_CODE = "ru"
+# The platform is English-only: no language switcher, no other locales.
+LANGUAGE_CODE = "en"
 
 LANGUAGES = [
-    ("ru", "Русский"),
     ("en", "English"),
 ]
+
+# Old language-prefixed URLs (/ru/..., /uz/...) are 301-redirected to the unprefixed
+# English URL by apps.common.middleware.LegacyLanguagePrefixRedirectMiddleware.
+LEGACY_LANGUAGE_PREFIXES = ["ru", "uz", "en"]
 
 TIME_ZONE = "UTC"
 

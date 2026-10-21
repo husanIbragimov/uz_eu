@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-A modular, Docker-first Django + DRF backend template. Core stack: Django 5.2, Django REST Framework, SimpleJWT auth, Celery (Redis/RabbitMQ broker), PostgreSQL, drf-spectacular (Swagger docs), Sentry, and Telegram-based exception alerting.
+A modular, Docker-first Django + DRF backend template. Core stack: Django 5.2, Django REST Framework, SimpleJWT auth, Celery (Redis broker), PostgreSQL, drf-spectacular (Swagger docs), Sentry, and Telegram-based exception alerting.
 
 All Django code lives under `src/`; `manage.py` and app code are rooted there, not at the repo root.
 
@@ -17,7 +17,7 @@ cp .envs/.env.example .envs/.env
 cp .envs/.env.local.example .envs/.env.local
 ```
 
-Required vars include `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `KAFKA_SERVERS`, `BOT_TOKEN`/`ADMIN_CHAT_ID`/`THREAD_ID` (Telegram alerts), `CRONITOR_API_KEY`, `SENTRY_DSN`, plus Postgres/RabbitMQ credentials used by `docker-compose.yml`.
+Required vars include `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `KAFKA_SERVERS`, `BOT_TOKEN`/`ADMIN_CHAT_ID`/`THREAD_ID` (Telegram alerts), `CRONITOR_API_KEY`, `SENTRY_DSN`, plus Postgres credentials used by `docker-compose.yml` and `CELERY_BROKER_URL` / `REDIS_URL` (Redis db 0 = Celery broker, db 1 = cache).
 
 ## Common commands
 
@@ -65,7 +65,7 @@ Enforced via `.pre-commit-config.yaml` (black, flake8, isort, mypy, plus a migra
 ├── docker/
 │   ├── Dockerfile               # web/celery image
 │   ├── DockerfileCron           # cron-worker image
-│   └── docker-compose.yml       # web, postgres, redis, rabbit, celery services
+│   └── docker-compose.yml       # web, postgres, redis, celery, celery-beat services
 ├── requirements/
 │   ├── base.txt                 # shared deps (Django, DRF, Celery, Kafka, Sentry, ...)
 │   ├── local.txt                # dev-only additions on top of base.txt
@@ -100,6 +100,11 @@ Enforced via `.pre-commit-config.yaml` (black, flake8, isort, mypy, plus a migra
     │   │   └── migrations/{dev,prod}/
     │   ├── upload/                    # file upload app (models/serializers/views/urls/tests.py)
     │   │   └── migrations/{dev,prod}/
+    │   ├── projects/                  # investment projects: passport, members, contacts, tasks/subtasks,
+    │   │                              #   comments, attachments, PMI import; services/ holds all writes + audit calls
+    │   ├── reference/                 # sectors, EU countries, Region tree (region -> districts via parent), orgs
+    │   ├── audit/                     # AuditLog + AuditService (field-level change history)
+    │   ├── notifications/             # in-app notifications (bell)
     │   └── logger/                     # cross-app logging + Telegram alerting
     │       ├── _loggers.py               # named logger instances
     │       ├── restapi_exception_handler.py  # DRF EXCEPTION_HANDLER
@@ -152,8 +157,8 @@ Rather than calling `gettext_lazy` inline, translatable strings are declared onc
 
 ### Background jobs
 
-Celery app is defined in `src/config/celery.py` (broker/backend config lives in Django settings via `CELERY_*` env vars), with Cronitor monitoring wired in via `cronitor.celery.initialize(app)`. Beat schedule uses `django_celery_beat`'s `DatabaseScheduler`. The `celery` service in `docker/docker-compose.yml` runs `celery -A config worker`; there's also a separate `DockerfileCron` for cron-style jobs.
+Celery app is defined in `src/config/celery.py` (broker/backend config lives in Django settings via `CELERY_*` env vars), with Cronitor monitoring wired in via `cronitor.celery.initialize(app)`. Beat schedule uses `django_celery_beat`'s `DatabaseScheduler`. The `celery` service in `docker/docker-compose.yml` runs `celery -A config worker` and `celery-beat` runs `celery -A config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler` (schedule declared in `app.conf.beat_schedule`, synced to the DB on start); there's also a separate `DockerfileCron` for cron-style jobs.
 
 ### Docker topology
 
-`docker/docker-compose.yml` defines `web` (gunicorn, migrates + collectstatic on boot), `postgres`, `redis`, `rabbit` (RabbitMQ, currently unused by the `web`/`celery` services which point at Redis), and `celery`. All source is bind-mounted from `src/` so container restarts pick up code changes without rebuilding.
+`docker/docker-compose.yml` defines `web` (gunicorn, migrates + collectstatic on boot), `postgres`, `redis` (Celery broker via `CELERY_BROKER_URL` and Django cache), `celery` and `celery-beat`. All source is bind-mounted from `src/` so container restarts pick up code changes without rebuilding.

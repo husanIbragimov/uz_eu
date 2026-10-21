@@ -25,6 +25,7 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "first_name",
                     "last_name",
+                    "avatar",
                     "role",
                 )
             },
@@ -52,6 +53,7 @@ class UserAdmin(BaseUserAdmin):
                     "username",
                     "password1",
                     "password2",
+                    "role",
                 )
             },
         ),

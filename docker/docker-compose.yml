@@ -6,13 +6,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: deya_web
+    container_name: uz_eu_web
     networks:
       - shared_network
     command: >
-      /bin/sh -c "while ! nc -z redis 6379; do sleep 1; done;
-                  while ! nc -z postgres 5432; do sleep 1; done;
-                  python manage.py collectstatic --noinput &&
+      /bin/sh -c "python manage.py collectstatic --noinput &&
                   python manage.py migrate &&
                   gunicorn --reload --workers ${WORKERS_COUNT:-4} --bind 0.0.0.0:8000 config.wsgi:application"
     volumes:
@@ -26,14 +24,14 @@ services:
     env_file:
       - ./../.envs/.env
     depends_on:
-      - redis
-      - postgres
-    environment:
-      - CELERY_BROKER=redis://redis:6379/0
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:17.0
-    container_name: deya_db
+    container_name: uz_eu_db
     env_file:
       - ./../.envs/.env
     environment:
@@ -44,13 +42,18 @@ services:
       - ./.volumes/pgdata:/var/lib/postgresql/data
     ports:
       - "5439:5432"
-
     networks:
       - shared_network
+    # -h localhost: during first-run initdb the image's temporary server listens on the socket only, so it isn't "ready".
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis:
     image: redis:7.2-alpine
-    container_name: deya_redis
+    container_name: uz_eu_redis
     restart: always
     ports:
       - "6379:6379"
@@ -59,43 +62,17 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - ./.volumes/redis_data:/data
-
-  rabbit:
-    image: rabbitmq:4.0-management
-    container_name: deya_rabbit
-    hostname: rabbit
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST}
-    ports:
-      - "5672:5672"
-      - "15682:15672"
-    networks:
-      - shared_network
-    volumes:
-      - ./.volumes/rabbitmq_data:/var/lib/rabbitmq
-    depends_on:
-      - postgres
-    env_file:
-      - ./../.envs/.env
-    restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   celery:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: deya_celery
+    container_name: uz_eu_celery
     networks:
       - shared_network
     command: celery -A config worker --loglevel=INFO --concurrency=${CELERY_WORKERS:-2}
@@ -104,9 +81,39 @@ services:
       - ./../media:/app/media
       - ./../logs:/app/logs
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     env_file:
       - ./../.envs/.env
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: uz_eu_celery_beat
+    networks:
+      - shared_network
+    # DatabaseScheduler reads django_celery_beat tables, which `web` creates on `migrate`; restart until they exist.
+    # Empty --pidfile: a stale celerybeat.pid in the bind-mounted src/ would otherwise block restarts.
+    command: >
+      celery -A config beat --loglevel=INFO --pidfile=
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./../src:/app/src
+      - ./../logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      web:
+        condition: service_started
+    env_file:
+      - ./../.envs/.env
+    restart: unless-stopped
 
 #  nginx:
 #    image: nginx:1.27

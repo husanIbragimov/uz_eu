@@ -16,3 +16,4 @@ from .migrations import *
 from .oauth import *
 from .sentry_conf import *
 from .swagger_conf import *
+from .projects import *

@@ -2,6 +2,10 @@ LOCAL_APPS = [
     "apps._auth",
     "apps.common",
     "apps.upload",
+    "apps.audit",
+    "apps.reference",
+    "apps.projects",
+    "apps.notifications",
 ]
 
 THIRD_PARTY_APPS = [
@@ -11,6 +15,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "django_json_widget",
+    "django_celery_beat",
 ]
 
 INSTALLED_APPS = [

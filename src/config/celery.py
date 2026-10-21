@@ -17,3 +17,10 @@ app.autodiscover_tasks()
 # Celery monitoring (https://cronitor.io/)
 cronitor.api_key = CRONITOR_API_KEY
 cronitor.celery.initialize(app)
+
+app.conf.beat_schedule = {
+    "notify-approaching-deadlines": {
+        "task": "apps.projects.tasks.notify_approaching_deadlines",
+        "schedule": crontab(hour=6, minute=0),
+    },
+}

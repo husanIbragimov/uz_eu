@@ -73,6 +73,17 @@ This repository is a modular and production-ready Django-based backend structure
   bash scripts/local/restore_db.sh
 ```
 
+## 🇺🇿🇪🇺 Investment platform
+
+The Uzbekistan–EU Global Gateway Investment Platform API is built on this template. It adds project categories
+and analytics, a projects table, the Project Passport, tasks/subtasks with deadline indicators, comments,
+notifications, an audit log and RBAC (`admin`, `uz_representative`, `eu_representative`, `viewer`).
+New apps: `projects`, `reference`, `audit`, `notifications`. See [CHANGELOG.md](CHANGELOG.md) for endpoints,
+roles and the one-time PMI import (`python manage.py import_pmi --file export.json`).
+
+Platform settings (`.envs/.env`): `DEADLINE_RISK_DAYS`, `ATTACHMENT_MAX_SIZE_MB`, `ATTACHMENT_ALLOWED_EXTENSIONS`,
+`COMMENT_EDIT_WINDOW_MINUTES`.
+
 ## ⚙️ Core Features
 
 * ✅ Custom User Model and Authentication
